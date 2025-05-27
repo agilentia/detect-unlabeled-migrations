@@ -1,0 +1,74 @@
+name: 'Check Migrations Labels'
+description: 'Check that, if new migration files are added, the migrations labels are set on the PR.'
+author: 'Sherpany'
+branding:
+  icon: 'refresh-cw'
+  color: 'yellow'
+
+inputs:
+  github-token:
+    description: 'GitHub token to use'
+    required: true
+  base-branch:
+    description: 'Base branch to compare against'
+    required: false
+    default: 'master'
+  required-labels:
+    description: 'Necessary labels to be set on the PR if there are new migrations'
+    required: false
+    default: 'migrations.uptime, migrations.downtime'
+  warning-label:
+    description: 'Label to add when migrations are NOT found'
+    required: false
+    default: 'missing.migrations.label'
+  slack-bot-token:
+    description: 'Slack bot token to use for sending messages'
+    required: true
+  slack-channel-id:
+    description: 'Channel ID to send a Slack message to if migrations labels are missing'
+    required: false
+    default: 'CNVJL2318' # silly walkers channel id
+
+runs:
+  using: 'composite'
+  steps:
+    # STEP 1
+    - name: Checkout Caller Repository Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0 # Crucial for git diff/range-diff operations
+
+    # STEP 2
+    - name: Fetch Base Branch History
+      shell: bash
+      run: |
+        echo "Fetching base branch ${{ github.event.pull_request.base.ref }} history..."
+        git fetch origin ${{ github.event.pull_request.base.ref }}:${{ github.event.pull_request.base.ref }}
+      env:
+        # Ensure the token used for fetch has read access if repo is private
+        # GITHUB_TOKEN usually suffices unless complex permissions are involved
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+
+    # STEP 3
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    # STEP 4
+    - name: Install requirements.txt
+      shell: bash
+      run: pip install -r ${{ github.action_path }}/actions/detect-unlabeled-migrations/requirements.txt
+
+    # STEP 5
+    - name: Run migrations labels check
+      shell: bash
+      run: python ${{ github.action_path }}/actions/detect-unlabeled-migrations//entrypoint.py
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        BASE_BRANCH: ${{ inputs.base-branch }}
+        REQUIRED_LABELS: ${{ inputs.required-labels }}
+        WARNING_LABEL: ${{ inputs.warning-label }}
+        SLACK_BOT_TOKEN: ${{ inputs.slack-bot-token }}
+        SLACK_CHANNEL_ID: ${{ inputs.slack-channel-id }}
+        GITHUB_EVENT_PATH: ${{ github.event_path }}

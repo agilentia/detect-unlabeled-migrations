@@ -1,0 +1,1 @@
+# detect-unlabeled-migrations

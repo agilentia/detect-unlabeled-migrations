@@ -18,9 +18,9 @@ inputs:
     required: false
     default: 'migrations.uptime, migrations.downtime'
   warning-label:
-    description: 'Label to add when migrations are NOT found'
+    description: 'Label to add when migrations labels are NOT set on the PR'
     required: false
-    default: 'missing.migrations.label'
+    default: 'Missing migrations label'
   slack-bot-token:
     description: 'Slack bot token to use for sending messages'
     required: true

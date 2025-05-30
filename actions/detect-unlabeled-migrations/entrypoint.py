@@ -15,6 +15,14 @@ SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_CHANNEL_ID = os.getenv("SLACK_CHANNEL_ID")
 EVENT_PATH = os.getenv("GITHUB_EVENT_PATH")
 
+# todo: implement logging
+# todo: make the action private
+# todo: complete the README.md with the optional parameters
+
+
+def _get_github_endpoint(repo: str, pr_number: int) -> str:
+    return f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels"
+
 
 def load_pr_info(event_path: str) -> tuple[int, str]:
     with open(event_path, "r") as f:
@@ -25,7 +33,7 @@ def load_pr_info(event_path: str) -> tuple[int, str]:
 
 
 def pr_has_label(repo: str, pr_number: int, required_labels: set[str]) -> bool:
-    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels"
+    url = _get_github_endpoint(repo, pr_number)
     headers = {"Authorization": f"Bearer {GITHUB_TOKEN}"}
     response = requests.get(url, headers=headers)
     response.raise_for_status()
@@ -34,9 +42,13 @@ def pr_has_label(repo: str, pr_number: int, required_labels: set[str]) -> bool:
 
 
 def send_slack_notification(pr_number: int, repo: str, required_labels: set[str]):
+    pr_url = f"https://github.com/{repo}/pull/{pr_number}"
+    line = "=" * 82
     msg = (
-        f":alert-light: PR #{pr_number} in {repo} is missing the required "
-        f"labels `{','.join(required_labels)}`!"
+        f"{line}\n"
+        f":alert-light: PR <{pr_url}|#{pr_number}> in {repo} is missing "
+        f"the required label  `{' or '.join(required_labels)}`!"
+        f"\n{line}"
     )
     slack.post_message(channel=SLACK_CHANNEL_ID, message=msg)
 
@@ -51,21 +63,15 @@ def check_for_migration_files() -> list[str]:
     )
     files = result.stdout.strip().split("\n")
     migration_files = [f for f in files if "/migrations/" in f and f.endswith(".py")]
-    print("=" * 100)
-    print(migration_files)
-    print("=" * 100)
     return migration_files
 
 
 def add_label(repo: str, pr_number: int, warning_label: str):
-    url = f"https://api.github.com/repos/{repo}/issues/{pr_number}/labels"
+    url = _get_github_endpoint(repo, pr_number)
     headers = {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
         "Accept": "application/vnd.github+json",
     }
-    print("=" * 100)
-    print("WL:", warning_label)
-    print("=" * 100)
     response = requests.post(url, json={"labels": [warning_label]}, headers=headers)
     if response.status_code >= 400:
         print(f"Failed to add label: {response.text}", file=sys.stderr)
@@ -89,4 +95,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    sys.exit(0)

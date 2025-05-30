@@ -18,7 +18,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           base_branch: 'master'
           required_labels: 'migrations.uptime, migrations.downtime'
-          warning_label: 'Missing migration labels'
+          warning_label: ':bomb: Missing migration labels'
           slack_channel_id: 'DPXKM3429'
 
 ```

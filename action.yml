@@ -20,7 +20,7 @@ inputs:
   warning-label:
     description: 'Label to add when migrations labels are NOT set on the PR'
     required: false
-    default: 'Missing migrations label'
+    default: ':bomb: Missing migrations label'
   slack-bot-token:
     description: 'Slack bot token to use for sending messages'
     required: true

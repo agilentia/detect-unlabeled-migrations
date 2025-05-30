@@ -35,8 +35,8 @@ def pr_has_label(repo: str, pr_number: int, required_labels: set[str]) -> bool:
 
 def send_slack_notification(pr_number: int, repo: str, required_labels: set[str]):
     msg = (
-        f":warning: PR #{pr_number} in {repo} is missing the required "
-        f"labels `{','.join(required_labels)}`! :warning:\n`."
+        f":alert-light: PR #{pr_number} in {repo} is missing the required "
+        f"labels `{','.join(required_labels)}`!"
     )
     slack.post_message(channel=SLACK_CHANNEL_ID, message=msg)
 
